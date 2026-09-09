@@ -37,7 +37,7 @@ def normalize_etherscan_raw(raw_txs: List[Dict[str, Any]]) -> List[Dict[str, Any
             'amount': amt,
             'asset': r.get('tokenSymbol') or r.get('asset') or 'ETH',
             'timestamp': ts,
-            'block': int(r.get('blockNumber')) if r.get('blockNumber') else None,
+            'block': int(r.get('blockNumber') if r.get('blockNumber') is not None else r.get('block')) if (r.get('blockNumber') is not None or r.get('block') is not None) else None,
             'chain': source_chain,
             'source_chain': source_chain,
             'destination_chain': destination_chain,

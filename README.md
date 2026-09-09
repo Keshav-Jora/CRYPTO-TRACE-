@@ -1,53 +1,156 @@
-# CryptoTrace 
+# CryptoTrace
 
-Automated blockchain fund-flow tracing and VASP identification for cybercrime investigators. Given a victim-reported crypto wallet address, CryptoTrace automatically retrieves public blockchain transactions, traces the fund flow across a bounded number of hops, matches destination addresses against a curated VASP/exchange label dataset with explicit confidence levels, flags explainable risk patterns, and generates a structured investigation report — replacing hours of manual explorer-hopping with a single input.
+CryptoTrace is a blockchain investigation prototype for tracing wallet fund flow, identifying downstream exposure, and highlighting suspicious activity in a bounded graph view. The project is designed for public blockchain analysis and investigative workflows, not for real-time enforcement or private-identity attribution.
 
-Built for Smart India Hackathon 2026 — Problem Statement SIH26183, Ministry of Home Affairs / I4C, Theme: Blockchain & Cybersecurity.
+## What the project does
 
-> This is a hackathon prototype, not an official government tool. It does not identify real-world identities, freeze funds, or replace legal process — it generates investigative leads from public blockchain data only.
+- Accepts a source wallet and a case context
+- Retrieves public blockchain transactions for supported chains
+- Traces multi-hop fund movement through a bounded graph
+- Normalizes raw provider output into a consistent evidence set
+- Identifies suspicious or high-risk paths and wallet clusters
+- Matches known VASP and exchange-related labels where available
+- Produces a structured investigation response and report artifacts
 
-## Project structure
-- backend/: FastAPI service with transaction retrieval, graph analysis, VASP matching, risk heuristics, PDF report generation, and test coverage
-- frontend/: React + Vite interface for wallet tracing and investigation review
-- docs/: project notes and quick-reference material
-- file/: supporting hackathon artifacts and build materials
+## Repository layout
 
-## Quick local run (Windows PowerShell)
+- `backend/` — FastAPI server, graph logic, blockchain adapters, risk analysis, and report generation
+- `frontend/` — React + Vite investigation UI
+- `docs/` — project documentation and reference notes
+- `demo_verification/` — local verification artifacts created during testing
+- `file/` — supporting project artifacts and hackathon materials
 
-1) Backend
-  cd D:\OneDrive\Documents\CRYPTO-TRACE\backend
-  python -m venv .venv
-  .\.venv\Scripts\Activate.ps1
-  python -m pip install --upgrade pip
-  python -m pip install -r requirements.txt
-  python -m uvicorn main:app --reload --port 8000
+## Project status
 
-2) Frontend
-  cd D:\OneDrive\Documents\CRYPTO-TRACE\frontend
-  npm install
-  npm run dev -- --host 127.0.0.1 --port 5173
+This repository contains a working prototype with a live FastAPI backend, a React frontend, blockchain provider adapters, investigation graph logic, and report generation. The codebase is explicitly scoped to public blockchain data and analyst tooling, and it is not a production-grade compliance or law-enforcement system.
 
-3) Investigate
-- Open http://127.0.0.1:5173
-- Enter a case ID and any valid Ethereum wallet address
-- Use live Etherscan retrieval by setting the backend environment variables
-- If live access is unavailable, the backend falls back to the cache instead of crashing
+## Tech stack
 
-## Configuration notes
-- Real live fetch requires `ETHERSCAN_API_KEY` and `USE_ETHERSCAN=true` in `backend/.env`
-- The project is designed to work safely in local/demo mode when no live API key is configured
+| Layer | Technology | Verified usage in this repo |
+| --- | --- | --- |
+| Backend API | FastAPI | Main service and request routing (`backend/main.py`, `backend/api/*`) |
+| Frontend UI | React + Vite | Investigation dashboard at `frontend/` |
+| Graph visualization | Cytoscape | Used by the frontend investigation graph |
+| Graph analysis | NetworkX | Bounded graph traversal and relationship summarization |
+| Blockchain access | Etherscan / TronScan adapters | Live transaction retrieval and provider normalization |
+| Data model | Pydantic | Backend request/response validation |
+| Reporting | ReportLab | PDF report generation |
+| Persistence | SQLite + app-level JSON/cache data | Case storage and data access helpers |
+| Validation & tests | pytest | Existing backend regression tests |
+| Environment config | Python dotenv | `.env`-based settings and provider keys |
 
-## Current scope
-- Persistent case storage and authentication are included in the local-first workflow
-- Multi-chain-aware tracing and richer graph analytics are supported as part of the investigation engine
-- Risk scoring and report exports are included for investigation workflow usage
+## Local setup
 
-## Limitations
-- This remains an investigative prototype and is not a production-grade money-laundering enforcement system or a private-bank/KYC integration
+### 1) Backend
 
-## Next recommended work
-- Add stronger multi-user case management and analytic workflows
-- Expand multi-chain adapters and richer entity intelligence
-- Add warehouse-grade VASP and mixer correlation workflows
+From the repository root:
 
-Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m uvicorn main:app --reload --port 8000
+```
+
+The backend exposes:
+
+- `GET /health`
+- `POST /trace`
+- case and report endpoints under `backend/api/`
+
+### 2) Frontend
+
+```powershell
+cd frontend
+npm install
+npm run dev -- --host 127.0.0.1 --port 5173
+```
+
+Then open:
+
+- http://127.0.0.1:5173
+
+## Environment and configuration
+
+Copy and adjust values in `backend/.env` from `backend/.env.example`.
+
+Required and optional settings include:
+
+```env
+USE_ETHERSCAN=true
+ETHERSCAN_API_KEY=your_etherscan_key
+TRONSCAN_API_KEY=your_tronscan_key
+DEMO_MODE=false
+FRONTEND_URL=http://127.0.0.1:5173
+PUBLIC_DEMO_CASE_ID=CASE-DEMO-REAL
+REQUEST_TIMEOUT=15
+MAX_RETRIES=3
+MAX_TRACE_WALLETS=25
+MAX_TRACE_TRANSACTIONS=500
+TRACE_TIMEOUT_SECONDS=45
+```
+
+Notes:
+
+- Live provider access requires valid API keys and a matching chain configuration.
+- Demo mode is intentionally opt-in and should remain off for real investigation work.
+- Never commit `.env` files, provider keys, or user credentials.
+
+## Investigation flow
+
+1. A user enters a case identifier and wallet address in the frontend.
+2. The frontend submits the request to the backend `POST /trace` endpoint.
+3. The backend validates the address and chain, then retrieves live or cached transaction data.
+4. The trace engine builds a bounded graph and extracts relevant wallet relationships.
+5. Risk heuristics, VASP matching, and evidence assembly are applied.
+6. The response includes graph data, suspicious-path findings, and evidence details.
+
+## Testing and verification
+
+### Backend tests
+
+From the repository root, the current project pattern is:
+
+```powershell
+cd "C:\Users\Divyanshu\CRYPTO-TRACE-"
+$env:PYTHONPATH = "."
+python -m pytest backend/tests -q
+```
+
+### Frontend build
+
+```powershell
+cd frontend
+npm run build
+```
+
+### Current verification status
+
+- Frontend production build: succeeded in the verified environment (`npm run build` completed successfully).
+- Backend pytest: requires a writable temporary directory. In this environment, pytest can fail with a `PermissionError` while creating temp folders under the Windows user temp area. This is an environment constraint rather than a source-code regression in the repository itself.
+
+## Security and responsible use
+
+This project is intended for public blockchain research and investigation support. It does not provide private identity resolution, law-enforcement enforcement, or direct legal action.
+
+Please refer to [SECURITY.md](./SECURITY.md) for project-specific guidance on secrets, API key handling, validation, data handling, and reporting vulnerabilities.
+
+## Contributing
+
+Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for contribution expectations, branch workflow, testing guidance, and repo hygiene rules.
+
+## License status
+
+There is no explicit license file in the current repository. Before the project is published broadly, the team or owners should decide on an appropriate open-source license. This repository should not be treated as if it has an assumed license.
+
+## Documentation and accuracy notes
+
+- This README reflects the repository as it exists today and intentionally avoids claiming unsupported functionality.
+- It is designed to be accurate, concise, and operationally useful for local setup and verification.
+- Certain demo or historical artifacts may be present in the repository and should be treated as supporting evidence, not as a statement of full product maturity.
+
+## Final note
+
+CryptoTrace is a focused prototype for blockchain tracing and investigation workflows. It is best understood as a public-data forensic tool and an engineering prototype rather than a full operational platform.
