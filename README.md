@@ -1,4 +1,4 @@
-# CryptoTrace I4C
+# CryptoTrace
 
 CryptoTrace is a blockchain investigation prototype for tracing wallet fund flow, identifying downstream exposure, and surfacing suspicious transaction pathways from public blockchain data. Built for SIH 2026 — SIH26183 — the project is designed to support an investigator’s workflow: gather public transaction evidence, map bounded fund-flow relationships, apply contextual VASP/exchange labels, and generate a structured case review with trace details and reporting artifacts.
 
