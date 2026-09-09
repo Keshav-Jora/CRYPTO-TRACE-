@@ -1,62 +1,74 @@
 # Contributing
 
-This repository is best treated as a focused blockchain investigation prototype. Contributions should stay aligned with the project scope: tracing, bounded graph analysis, risk heuristics, investigation workflows, and documentation quality.
+CryptoTrace is a focused blockchain investigation prototype. Contributions should stay aligned with the project’s real scope: blockchain tracing, bounded graph analysis, evidence handling, risk heuristics, and investigation-oriented documentation.
+
+## Contribution principles
+
+- keep changes narrow and reviewable
+- do not broaden the project into unrelated product features
+- avoid source changes unless the task clearly requires them
+- document limitations and environment constraints explicitly
+- do not add secrets or local credential files to the repository
 
 ## Workflow
 
-1. Create a feature branch from the current working branch.
-2. Keep changes scoped to the assigned area.
-3. Prefer small, reviewable diffs.
-4. Do not add secrets, credentials, or local environment values to the repository.
-5. Verify affected tests or build steps before opening or updating a PR.
+1. create a feature branch from the current working branch
+2. keep changes scoped to the relevant subsystem
+3. validate the smallest relevant test or build step
+4. document any environment-specific issues clearly
+5. avoid unrelated refactors or broad UI redesigns
 
-## Branch expectations
+## Branch naming
 
-Use clear branch names that reflect the work, for example:
+Use descriptive names such as:
 
-- `feature/trace-bounds`
-- `fix/tron-provider-validation`
-- `docs/readme-polish`
+- `feature/bounded-trace-fix`
+- `fix/tron-address-validation`
+- `docs/repository-polish`
 
 ## Testing expectations
 
-Run the smallest relevant validation for the change.
-
-Backend tests (from the repository root):
+### Backend
 
 ```powershell
+cd .
 $env:PYTHONPATH = "."
 python -m pytest backend/tests -q
 ```
 
-Frontend build validation:
+### Frontend build
 
 ```powershell
 cd frontend
 npm run build
 ```
 
-If a test or build fails because of local environment constraints, document the failure clearly and do not claim a pass without evidence.
+If a validation step fails because of a local environment constraint, record that explicitly instead of claiming a pass.
 
 ## Documentation expectations
 
-- Keep README and project docs technically accurate.
-- Do not claim capabilities that are not supported by the code or verified infrastructure.
-- When a feature or flow is uncertain, document the limitation instead of describing it as complete.
+- keep README and docs technically accurate
+- avoid unsupported claims or overstatement
+- explain limitations when a feature is speculative or environment-dependent
+- do not invent screenshots, workflows, or assets that are not in the repository
 
 ## Security expectations
 
-- Never add `.env` files, API keys, or secrets to git.
-- Do not expose provider keys in logs, screenshots, or PR descriptions.
-- Treat public blockchain data as informational only; it is not proof of identity or guilt.
-
-## Pull request guidance
-
-- Summarize what changed and why.
-- Include verification commands and brief results.
-- Keep scope narrow and avoid unrelated refactors.
-- Be explicit about environment-specific limitations.
+- never commit `.env` files or API keys
+- do not share credentials in PRs, screenshots, or logs
+- treat public blockchain data as informational and contextual rather than identity-proof evidence
 
 ## Scope discipline
 
-This project should not drift into unrelated areas such as extensive frontend redesigns, database migrations, or unrelated business workflows unless the task explicitly demands them.
+The repository should remain focused on blockchain investigation and analysis workflows, not unrelated app features, business systems, or unrelated infrastructure refactors.
+
+## Pull request guidance
+
+- summarize the change and why it matters
+- include the exact verification commands used
+- note any environment-specific limitations
+- keep the diff focused and readable
+
+## Final check
+
+Before opening or updating a PR, verify that the change is consistent with the project’s actual architecture and does not modify application behavior unless absolutely required by the task.
