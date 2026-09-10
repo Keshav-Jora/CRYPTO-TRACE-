@@ -32,7 +32,7 @@ CryptoTrace is a blockchain investigation prototype built around public blockcha
 ## 5. Authentication and session handling
 
 - Basic auth and case access flows are implemented with backend validation and tokens.
-- Tokens should be stored only in secure client-side storage and treated as sensitive credentials.
+- The current frontend stores its session token in browser local storage for the demo workflow. Treat it as a sensitive credential; do not use the current implementation as a hardened session-management pattern without a dedicated security review.
 - The project is not a hardened enterprise identity system without an additional security review.
 
 ## 6. Responsible vulnerability reporting

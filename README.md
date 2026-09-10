@@ -1,275 +1,120 @@
 # CryptoTrace
 
-CryptoTrace is a blockchain investigation prototype for tracing wallet fund flow, identifying downstream exposure, and surfacing suspicious transaction pathways from public blockchain data. Built for SIH 2026 — SIH26183 — the project is designed to support an investigator’s workflow: gather public transaction evidence, map bounded fund-flow relationships, apply contextual VASP/exchange labels, and generate a structured case review with trace details and reporting artifacts.
+CryptoTrace is a public-blockchain investigation prototype. It helps an analyst trace bounded wallet-to-wallet flow, preserve transaction evidence, add locally maintained VASP or service context where available, and review the result in a case workspace.
 
-Live demo: https://crypto-trace-gold.vercel.app/
+**Live frontend:** <https://crypto-trace-gold.vercel.app/>
 
-## Product Preview
+> CryptoTrace supports investigative review of public data. It does not establish a person's identity, ownership of an address, criminal activity, or a legal conclusion.
 
-CryptoTrace combines a React investigation UI with a FastAPI backend to support:
+## What it does
 
-- source wallet tracing and bounded multi-hop exploration
-- wallet-to-wallet relationship mapping
-- suspicious path and cluster heuristics
-- VASP/exchange context matching
-- evidence ledger and report export
+- Traces supported wallet activity with a bounded, cycle-safe traversal of up to three hops.
+- Normalizes provider records into a common evidence format and retains the evidence ledger behind the graph.
+- Presents aggregated wallet relationships, transaction direction, hop-aware views, and case history in the React workspace.
+- Produces an evidence-based `risk_score` (0-100) separately from `trace_confidence`.
+- Adds exact-match VASP/service labels from local label data when a label exists.
+- Saves cases in SQLite and exports investigator PDF, victim-friendly PDF, CSV, and JSON evidence views.
 
-The project is intentionally scoped to investigation support and public blockchain analysis, not to real-world identity proof, legal enforcement, or private KYC resolution.
+## Investigation workflow
 
-## The Problem
+1. Register or sign in to create a private case history.
+2. Submit a source wallet, chain, and optional transaction, amount, asset, or case identifier.
+3. The backend validates the address, retrieves configured provider data (or explicitly enabled demo data), normalizes records, and builds a bounded trace.
+4. Review the graph as a compact relationship view and the evidence ledger as the transaction-level record.
+5. Review risk factors, trace confidence, entity context, and any partial-trace notice before exporting a report.
 
-Investigators working on blockchain-related cases often need to manually piece together fund movement across multiple wallets, providers, and transaction histories. Public blockchain data is accessible but fragmented, difficult to normalize, and often noisy. The challenge is to turn noisy transaction records into a structured, explainable investigation trail without overstating certainty.
+### Reading the results
 
-## The Solution
+| Output | Meaning | What it does not mean |
+| --- | --- | --- |
+| Evidence | Normalized public transaction records used by the trace | A complete record of off-chain activity |
+| Graph relationship | A visual aggregation of observed transactions between wallets | Proof that wallets share an owner or intent |
+| Risk score | A 0-100 heuristic calculated from recorded evidence | Proof of fraud or criminality |
+| Trace confidence | A separate indication of trace completeness/context | A risk score or identity confidence |
+| VASP/service match | An exact match in local contextual label data | KYC, ownership, or legal attribution |
 
-CryptoTrace provides a bounded investigation workflow around public blockchain evidence:
+The graph may aggregate repeated transactions for readability. Selecting a relationship exposes its underlying transactions; the evidence ledger remains the authoritative transaction record in the response.
 
-1. validate the wallet and chain input
-2. retrieve transaction data from supported public providers
-3. normalize and filter the raw transactions into evidence
-4. build a bounded graph with hop constraints and cycle safety
-5. identify suspicious paths, wallet clusters, and VASP-context matches
-6. return the graph, evidence, summary, and report outputs for investigator review
+## Supported retrieval paths
 
-## Why CryptoTrace
+| Path | Provider | Notes |
+| --- | --- | --- |
+| EVM-compatible addresses | Etherscan V2 | The backend maps ETH, BSC, Polygon, Arbitrum, and Base chain identifiers. Availability depends on the configured provider key and provider support. |
+| TRON Base58 addresses | TronScan | Requires a backend-only `TRONSCAN_API_KEY`; addresses are validated with Base58Check validation. |
+| Demo data | Repository cache | Explicit opt-in with `DEMO_MODE=true`; it is never presented as live data. |
 
-- It is designed for blockchain forensic workflows rather than generic wallet dashboards.
-- It keeps a bounded graph and explicit evidence trail instead of treating all raw data as equal.
-- It exposes a distinction between observed transactions and analytical interpretation.
-- It keeps risk scoring, wallet clustering, and VASP matching in a transparent, explainable form.
-
-## Key Capabilities
-
-### Investigation
-
-- wallet tracing for supported public chains
-- bounded multi-hop exploration
-- evidence filtering to keep only relevant outbound flow
-- case-based workflow with saved results and report access
-
-### Graph Intelligence
-
-- wallet graph construction from normalized transaction records
-- directed wallet-to-wallet relationships
-- hop-aware visualization with source, intermediate, and downstream nodes
-- graph payload generation for frontend investigation views
-- bounded traversal using max-hop logic and cycle prevention
-
-### Context & Intelligence
-
-- VASP and exchange label matching from local label data
-- wallet cluster heuristics based on repeated downstream activity
-- suspicious-path analysis from observed relationship patterns
-- confidence and explanatory metadata for analytical results
-
-### Evidence & Reporting
-
-- full evidence ledger in the backend response
-- PDF and CSV report generation
-- case lookup and report retrieval endpoints
-- reproducible trace metadata and graph hash support
-
-## Investigation Workflow
-
-1. A user registers or logs in through the backend auth flow.
-2. The frontend submits a case and wallet request to `POST /trace`.
-3. The backend validates the wallet and chain, then fetches live or cached transactions.
-4. Transaction records are normalized and restricted to relevant outbound flow.
-5. The investigation graph is built for the bounded trace.
-6. Risk heuristics, suspicious-path scoring, wallet clusters, and VASP context are computed.
-7. The response includes graph data, evidence, and summary metrics.
-8. The investigator can review the saved case and export PDF or CSV artifacts.
-
-## System Architecture
+## Architecture
 
 ```mermaid
 flowchart LR
-    UI[React + Vite frontend] --> API[FastAPI backend]
-    API --> Auth[auth router]
-    API --> Cases[cases router]
-    API --> Trace[trace_impl router]
-    API --> Reports[reports router]
-
-    Trace --> Fetcher[fetcher.py]
-    Fetcher --> Etherscan[etherscan_adapter.py]
-    Fetcher --> Tron[tronscan_adapter.py]
-    Fetcher --> Cache[data/eth_cache.json]
-
-    Trace --> Graph[graph_utils.py / trace_engine.py]
-    Trace --> Fraud[fraud_detector.py]
-    Trace --> VASP[vasp_matcher.py]
-    Trace --> Persist[persistence.py / sqlite_store.py]
-
-    Reports --> PDF[report_generator.py]
-    Persist --> DB[(SQLite case data)]
-    VASP --> Labels[data/vasp_labels.json / vasp/vasp_labels.json]
+    UI[React + Vite] --> API[FastAPI]
+    API --> Auth[Authentication and case access]
+    API --> Trace[Trace orchestration]
+    API --> Reports[PDF and CSV reports]
+    Trace --> Providers[Etherscan / TronScan]
+    Trace --> Normalize[Normalization and attribution]
+    Trace --> Graph[Bounded graph and heuristics]
+    Trace --> Labels[Local VASP labels]
+    API --> Store[(SQLite case store)]
 ```
 
-## Investigation Graph
-
-The graph is built from the normalized transaction evidence and represents fund-flow relationships between wallets. The important distinction is:
-
-- the graph is a visual, bounded representation of wallet relationships
-- the evidence ledger is the underlying transaction dataset
-- multiple repeated transactions between the same wallet pair may be represented as one visual relationship for readability
-- the raw transaction details remain available in the evidence and selection views
-
-This is a key design choice for readability: a visually aggregated relationship does not delete the underlying evidence. The graph should be read as an investigative summary, while the evidence array remains the authoritative transaction record.
-
-The graph logic is built around a bounded flow view with:
-
-- source and victim wallet anchoring
-- direct wallet relationships
-- downstream multi-hop movement
-- branch and convergence behavior
-- suspicious-path emphasis
-- cluster candidate grouping
-- VASP-related labels when available
-
-The backend explicitly retains a bounded traversal model so the graph remains explainable and does not drift into an unbounded transaction web.
-
-## Evidence & Confidence Model
-
-CryptoTrace separates several layers of interpretation:
-
-| Layer | Description | Purpose |
-| --- | --- | --- |
-| Observed blockchain data | Raw provider transaction records and normalized fields | factual transaction evidence |
-| Derived fund-flow relationships | wallet-to-wallet edges built from the transaction stream | relationship mapping |
-| VASP / exchange context | matched labels from local contextual data | investigative context only |
-| Analytical heuristics | clusters, suspicious path, risk scoring | interpretive lead generation |
-| Confidence markers | confidence and risk metadata | explainability and analyst review |
-
-Important: VASP and exchange labels are contextual signals, not proof of real-world identity, ownership, or criminality. They are treated as supporting investigative context in the same way a heuristic or pattern analysis would be treated.
-
-## VASP / Exchange Context
-
-The project includes a local VASP matching layer and label dataset. Relevant code paths include:
-
-- `backend/services/vasp_matcher.py`
-- `backend/data/vasp_labels.json`
-- `backend/vasp/vasp_labels.json`
-
-The matching logic is deterministic and exact-match based on a normalized address key. This means it can provide contextual labels where the dataset contains a known address, but it does not imply confirmed identity or legal attribution.
-
-## Risk & Suspicious Activity Analysis
-
-The risk analysis is implemented in `backend/services/fraud_detector.py` and includes:
-
-- wallet-cluster heuristics
-- common-input-ownership and peeling-chain style grouping
-- suspicious path identification
-- layered probability scoring across evidence
-- risk factors and confidence signals
-- evidence checksum support for trace consistency
-
-The system is designed to generate analytical signals from observed behaviors, not to claim guilt or ownership.
-
-## Screenshots / Product Showcase
-
-This repository does not currently include a checked-in screenshot gallery or product image set. The live application is available at:
-
-- https://crypto-trace-gold.vercel.app/
-
-The repository is therefore best presented with the live demo link and the code-level architecture rather than fake or synthetic screenshots.
-
-## Technology Stack
-
-| Layer | Technology | Purpose |
-| --- | --- | --- |
-| Frontend | React + Vite | Investigation dashboard and UI flow |
-| Backend | FastAPI | REST API and transaction orchestration |
-| Data validation | Pydantic | Request and response validation |
-| Graph analysis | NetworkX | Bounded graph traversal and relationship modeling |
-| Blockchain adapters | Etherscan + TronScan integration | Public provider retrieval for ETH/TRON activity |
-| Trace orchestration | Python service layer | normalization, fetch orchestration, risk logic |
-| Persistence | SQLite | Case and user data storage |
-| Reporting | ReportLab | PDF and CSV export generation |
-| Environment config | python-dotenv | local `.env` settings |
-| Testing | pytest | Backend regression testing |
-
-## Repository Structure
+## Repository layout
 
 ```text
-CryptoTrace/
-├── backend/
-│   ├── adapters/
-│   ├── api/
-│   ├── data/
-│   ├── graph/
-│   ├── models/
-│   ├── reports/
-│   ├── risk/
-│   ├── services/
-│   ├── vasp/
-│   ├── .env.example
-│   ├── README.md
-│   ├── config.py
-│   ├── main.py
-│   ├── requirements.txt
-│   └── tests/
-├── frontend/
-│   ├── src/
-│   ├── public/
-│   ├── vite.config.ts
-│   ├── package.json
-│   └── package-lock.json
-├── docs/
-│   ├── README.md
-│   ├── JUDGE_QA_QUICKREF.md
-│   └── CryptoTrace_Technical_Documentation.pdf
-├── file/
-├── README.md
-├── SECURITY.md
-├── CONTRIBUTING.md
-├── docker-compose.yml
-├── DEMO_VERIFICATION.md
-├── run_demo.ps1
-└── .gitignore
+backend/                 FastAPI API, adapters, analysis services, tests, and seed data
+frontend/                React/Vite investigation interface
+docs/                    Supporting technical and judge-facing documentation
+demo_verification/       Captured demonstration artifacts (historical reference)
+file/                    Supplied project and competition reference material
+CONTRIBUTING.md          Contribution expectations
+SECURITY.md              Security and responsible-use guidance
+DEMO_VERIFICATION.md     Context for the captured demonstration artifacts
+docker-compose.yml       Local two-container setup
+run_demo.ps1             Windows setup reminder
 ```
 
-## API Overview
+## API overview
 
-### Authentication
+| Method | Path | Access | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/health` | Public | Service health check |
+| `POST` | `/auth/register` | Public | Create a user and return a token |
+| `POST` | `/auth/login` | Public | Sign in and return a token |
+| `GET` | `/auth/me` | Bearer token | Return the current user |
+| `POST` | `/trace` | Optional bearer token | Run and persist a bounded trace |
+| `GET` | `/cases` | Bearer token | List the caller's private cases |
+| `GET` | `/cases/{case_id}` | Case access | Load a saved case |
+| `GET` | `/reports/{case_id}.pdf` | Case access | Investigator PDF |
+| `GET` | `/reports/{case_id}.victim.pdf` | Case access | Plain-language PDF |
+| `GET` | `/reports/{case_id}.csv` | Case access | CSV evidence export |
+| `GET` | `/schema` | Public | Illustrative request/response contract |
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| POST | `/auth/register` | create a user and return a JWT-style token |
-| POST | `/auth/login` | log in and return a token |
-| GET | `/auth/me` | return the current authenticated user |
+`/trace` accepts `wallets`, `source_wallet`, or `address`; it also accepts optional `tx_hash`, `amount`, `currency`, `max_hops`, and date bounds. `max_hops` is constrained to 1-3. See [`backend/api/trace_impl.py`](backend/api/trace_impl.py) for the current request contract.
 
-### Case access
+## Run locally
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| GET | `/cases` | list cases for the authenticated user |
-| GET | `/cases/{case_id}` | fetch a saved case record |
+### Prerequisites
 
-### Trace and reports
-
-| Method | Path | Purpose |
-| --- | --- | --- |
-| GET | `/health` | service health check |
-| POST | `/trace` | trace one or more wallets and return graph/evidence summary |
-| GET | `/reports/{case_id}.pdf` | generate a PDF report |
-| GET | `/reports/{case_id}.csv` | generate a CSV evidence export |
-| GET | `/reports/{case_id}.victim.pdf` | generate a plain-language victim-facing report |
-| GET | `/schema` | return the agreed request/response schema |
-
-## Local Development
+- Python 3.11+ recommended
+- Node.js 20+ recommended
+- An Etherscan key for live EVM retrieval and a TronScan key for live TRON retrieval
 
 ### Backend
 
+Run these commands from the repository root. Running `main:app` from `backend/` is not supported because the application imports the `backend` package from the root.
+
 ```powershell
-cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-python -m uvicorn main:app --reload --port 8000
+python -m pip install -r backend/requirements.txt
+Copy-Item backend/.env.example backend/.env
+python -m uvicorn backend.main:app --reload --port 8000
 ```
 
 ### Frontend
+
+In a second terminal:
 
 ```powershell
 cd frontend
@@ -277,144 +122,66 @@ npm install
 npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
-Open the app at:
+Open <http://127.0.0.1:5173>. Without `VITE_API_BASE_URL`, Vite proxies API requests to `http://127.0.0.1:8000`.
 
-- http://127.0.0.1:5173
+### Docker Compose
 
-## Environment Configuration
-
-Copy the project defaults from `backend/.env.example` into a local `backend/.env` file and fill in the required values.
-
-```env
-APP_ENV=production
-JWT_SECRET=replace-with-a-long-random-secret
-PASSWORD_SALT=replace-with-a-second-long-random-secret
-JWT_TTL_MINUTES=240
-FRONTEND_URL=http://127.0.0.1:5173
-CORS_ORIGINS=
-PUBLIC_DEMO_CASE_ID=CASE-DEMO-REAL
-USE_ETHERSCAN=true
-ETHERSCAN_API_KEY=replace-with-etherscan-key
-TRONSCAN_API_KEY=replace-with-tronscan-key
-DEMO_MODE=false
-REQUEST_TIMEOUT=15
-MAX_RETRIES=3
-BACKOFF_SECONDS=2
-MAX_TRACE_WALLETS=25
-MAX_TRACE_TRANSACTIONS=500
-TRACE_TIMEOUT_SECONDS=45
-MAX_HISTORICAL_PRICE_LOOKUPS=10
-TRONSCAN_PAGE_SIZE=100
-```
-
-Notes:
-
-- live provider access depends on valid API keys and chain configuration
-- demo mode is opt-in and should remain off for real investigation work
-- secrets must never be committed into the repository
-
-## Testing & Verification
-
-The repository includes a backend test suite under `backend/tests` and a frontend production build command.
-
-### Backend tests
+Create `backend/.env` first, then run from the repository root:
 
 ```powershell
-cd .
+docker compose up --build
+```
+
+The frontend container is available on <http://127.0.0.1:5173> and proxies API requests to the backend container.
+
+## Configuration
+
+Copy [`backend/.env.example`](backend/.env.example) to `backend/.env`. Keep provider credentials and authentication secrets backend-side.
+
+| Variable | Required for | Notes |
+| --- | --- | --- |
+| `JWT_SECRET`, `PASSWORD_SALT` | Any non-development deployment | Use unique, long secret values. |
+| `ETHERSCAN_API_KEY` | Live EVM retrieval | Required when live EVM mode is enabled. |
+| `TRONSCAN_API_KEY` | Live TRON retrieval | Required for TRON; never expose it in `VITE_*` variables. |
+| `USE_ETHERSCAN` | Provider mode | Defaults to `true`; the current setting governs live retrieval. |
+| `DEMO_MODE` | Cached demonstration data | Defaults to `false`; enable explicitly for the repository fixture. |
+| `FRONTEND_URL`, `CORS_ORIGINS` | Browser deployments | Comma-separated allowed origins; localhost and the current Vercel origin are included by default. |
+| `MAX_TRACE_WALLETS`, `MAX_TRACE_TRANSACTIONS`, `TRACE_TIMEOUT_SECONDS` | Safety bounds | Limit traversal scope and execution time. |
+
+For a Vercel frontend, set `VITE_API_BASE_URL` to the public HTTPS backend URL at build time. The frontend accepts `VITE_API_URL` as a legacy alias. Configure the corresponding frontend origin on the backend through `FRONTEND_URL` or `CORS_ORIGINS`.
+
+## Validate changes
+
+```powershell
+# From the repository root
 $env:PYTHONPATH = "."
 python -m pytest backend/tests -q
-```
 
-### Frontend build
-
-```powershell
-cd frontend
+# From frontend/
 npm run build
 ```
 
-### Verification status
-
-- The frontend production build is a valid repo check and is intended to be run from `frontend/`.
-- The backend pytest suite is present and structured around wallet tracing, graph logic, and provider behavior.
-- In some local Windows environments, a temporary-directory permissions issue can prevent pytest from creating files in the system temp folder. This is an environment constraint and should be treated separately from the project’s application logic.
+The backend suite covers graph traversal, attribution, risk scoring, provider normalization, TRON validation, report generation, and provider error paths. The frontend currently has no separate automated test runner; its production build is the repository check for frontend changes.
 
 ## Deployment
 
-The live frontend deployment is verified at:
+The public frontend is hosted at <https://crypto-trace-gold.vercel.app/>. A production frontend deployment needs `VITE_API_BASE_URL` set to the backend's public HTTPS URL. The backend must keep its secrets server-side and allow the frontend origin through its CORS configuration.
 
-- https://crypto-trace-gold.vercel.app/
+This repository includes Dockerfiles and `docker-compose.yml` for containerized local operation. It does not include infrastructure-as-code for a particular hosted backend provider; configure provider secrets, SQLite persistence, CORS, and deployment storage for the chosen environment.
 
-This repository includes a FastAPI backend and a Vite frontend, but backend hosting details should only be documented if they are verified in the actual deployment configuration. The project is best described as a public blockchain investigation prototype with a live frontend deployment, not as a production law-enforcement or KYC system.
+## Security, limitations, and responsible use
 
-## Security & Responsible Use
+Read [SECURITY.md](SECURITY.md) before operating against live providers. In particular:
 
-This system is designed for public blockchain investigation and contextual signal analysis. It does not provide:
+- Do not commit `.env` files, API keys, JWT secrets, or salts.
+- Public blockchain data, graph relationships, labels, and heuristics are investigative context only.
+- Provider rate limits, provider coverage, bounded traversal, and off-chain activity limit what a trace can show.
+- A label match, cluster, or investigative lead is not proof of a person's identity or wrongdoing.
 
-- guaranteed real-world identity proof
-- private KYC or bank access
-- legal attribution or guilt determination
-- automatic fund freezing or recovery
-- definitive ownership proof for wallet addresses
+## Contributing and project material
 
-All outputs should be treated as investigative leads supported by public blockchain evidence, contextual labels, and heuristics.
-
-See [SECURITY.md](./SECURITY.md) for project-specific guidance on secrets, backend configuration, CORS, validation, and responsible vulnerability reporting.
-
-## Limitations
-
-CryptoTrace is best understood as an investigation-support prototype rather than a production-grade compliance system.
-
-Current limitations include:
-
-- public blockchain data is inherently partial and may not reflect all off-chain activity
-- VASP labels are contextual and may not prove ownership or control
-- graph visualization is bounded for readability and relationship clarity
-- public-provider availability and rate limits may affect live retrieval
-- the project is built for investigative analysis and not for operational enforcement workflows
-
-## Roadmap
-
-### Implemented
-
-- FastAPI backend with case and report APIs
-- ETH and TRON public provider integration paths
-- bounded multi-hop trace flow
-- graph generation and wallet relationship mapping
-- suspicious-path and cluster heuristics
-- VASP/exchange label matching
-- evidence ledger and report generation
-- frontend investigation UI with local API proxy and runtime API base configuration
-
-### Next
-
-- strengthen provider-fallback and error-reporting UX
-- broaden documentation and onboarding quality
-- improve operational observability for tracing and provider issues
-- refine large-graph readability and analyst-focused graph summarization
-
-### Future
-
-- broader chain coverage and provider normalization
-- stronger analyst workflow tooling
-- deeper cross-case analytics and evidence review
-- production-grade deployment hardening and governance controls
-
-## Contributing
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for contributor expectations, scope discipline, testing guidance, and repository hygiene rules.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for scope and verification expectations. Supporting material is indexed in [docs/README.md](docs/README.md); captured demonstration artifacts are described in [DEMO_VERIFICATION.md](DEMO_VERIFICATION.md).
 
 ## License
 
-No explicit license file is present in the repository at this time. Before the project is published more broadly, the project owners should decide on the appropriate open-source license for the repository.
-
-## Team / Project Information
-
-- Project: CryptoTrace
-- Problem statement: SIH26183
-- Theme: Blockchain & Cybersecurity
-- Government partner: Ministry of Home Affairs / I4C
-- Initiative: Smart India Hackathon 2026
-
-## Final Note
-
-CryptoTrace is a focused public-blockchain investigation prototype. It is designed to help an analyst review fund-flow patterns, suspicious relationships, and contextual evidence, while staying transparent about the difference between observed blockchain data, derived analytical signals, and real-world attribution.
+No license file is currently provided. Project owners should choose and add a license before representing the repository as open-source licensed.

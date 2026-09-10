@@ -14,7 +14,7 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("cryptotrace")
 
-app = FastAPI(title="CryptoTrace - Backend Skeleton")
+app = FastAPI(title="CryptoTrace API")
 
 init_db()
 

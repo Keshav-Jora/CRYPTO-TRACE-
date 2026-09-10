@@ -1,33 +1,41 @@
-CryptoTrace - Backend Skeleton
+# CryptoTrace backend
 
-This skeleton provides a minimal FastAPI backend, NetworkX graph builder, FIFO attribution implementation, sample cached transactions, and a unit test.
+The backend is a FastAPI service for address validation, provider retrieval, normalization, bounded tracing, case persistence, and report generation.
 
-Quick start (PowerShell, Windows):
+## Run locally
 
-1. Create and activate venv
-   python -m venv .venv
-   .\.venv\Scripts\Activate.ps1
+Run from the repository root so Python can resolve the `backend` package:
 
-2. Install requirements
-   pip install -r requirements.txt
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r backend/requirements.txt
+Copy-Item backend/.env.example backend/.env
+python -m uvicorn backend.main:app --reload --port 8000
+```
 
-3. Run the app (from backend folder)
-   uvicorn main:app --reload --port 8000
+The service is available at <http://127.0.0.1:8000>; `GET /health` returns a health response.
 
-4. Run tests
-   pytest -q
+## Key areas
 
-Files created:
-- main.py (FastAPI app)
-- api/routes.py (POST /trace reading cached data)
-- services/graph_builder.py (build graph from data/eth_cache.json)
-- services/attribution.py (FIFO attribution & annotation)
-- services/vasp_matcher.py (simple JSON lookup)
-- data/eth_cache.json (sample transactions)
-- data/vasp_labels.json (sample VASP record)
-- tests/test_attribution.py (unit test for FIFO worked example)
+- `adapters/`: Etherscan and TronScan provider adapters.
+- `api/`: authentication, case, trace, report, and schema routes.
+- `services/`: validation, retrieval, normalization, attribution, persistence, VASP matching, and report generation.
+- `graph/` and `risk/`: bounded graph metrics and heuristic support.
+- `data/`: checked-in cache and local VASP labels used for explicit demo/context workflows.
+- `tests/`: backend regression tests.
 
-Next recommended steps:
-- Expand fetcher + normaliser to call Etherscan when needed (with rate limit + cache fallback)
-- Implement evidence assembly and ReportLab PDF stub
-- Build React frontend against the /trace schema (mock data already matches shape)
+## Configuration
+
+Copy `.env.example` to `.env`. Live EVM traces require `ETHERSCAN_API_KEY`; live TRON traces require `TRONSCAN_API_KEY`. `DEMO_MODE=true` is explicit opt-in for cached demonstration data.
+
+Do not expose backend secrets through frontend environment variables. Production browser origins are configured with `FRONTEND_URL` and `CORS_ORIGINS`.
+
+## Test
+
+```powershell
+$env:PYTHONPATH = "."
+python -m pytest backend/tests -q
+```
+
+See the [root README](../README.md) for the API overview, full configuration reference, and deployment notes.
