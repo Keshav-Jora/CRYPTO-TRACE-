@@ -158,7 +158,7 @@ def test_tron_requires_its_own_provider_configuration(monkeypatch):
         use_etherscan=True, demo_mode=False, etherscan_api_key="test", tronscan_api_key="",
     ))
     try:
-        trace_impl.trace(trace_impl.TraceRequest(chain="TRON", wallets=["TNYgZhaqeJRhdWwpqM1WxJU88L4GxW9BsV"]), SimpleNamespace(headers={}))
+        trace_impl.trace(trace_impl.TraceRequest(chain="TRON", wallets=["T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb"]), SimpleNamespace(headers={}))
     except HTTPException as exc:
         assert exc.status_code == 503
         assert "TRONSCAN_API_KEY" in exc.detail
@@ -215,8 +215,8 @@ def test_tron_trace_uses_same_transaction_id_for_evidence_and_graph(monkeypatch)
     from types import SimpleNamespace
     from backend.api import trace_impl
 
-    source = "TNYgZhaqeJRhdWwpqM1WxJU88L4GxW9BsV"
-    destination = "TVjsyZ7fYF3qLF6BQgPmTEZy1xrNL6wyKz"
+    source = "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb"
+    destination = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj"
     monkeypatch.setenv("DEMO_MODE", "false")
     monkeypatch.setenv("USE_ETHERSCAN", "true")
     monkeypatch.setenv("TRONSCAN_API_KEY", "test")

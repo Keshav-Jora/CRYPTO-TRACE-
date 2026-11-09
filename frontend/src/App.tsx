@@ -61,6 +61,7 @@ type AuthState = {
 
 export default function App(){
   const [data, setData] = useState<any>(null)
+  const [selectedTransactionHash, setSelectedTransactionHash] = useState<string | null>(null)
   const [showAllSuspiciousPaths, setShowAllSuspiciousPaths] = useState(false)
   const [auth, setAuth] = useState<AuthState | null>(() => {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -138,6 +139,7 @@ export default function App(){
         throw new Error('Your session has expired. Please log in again.')
       }
       if (!res.ok) throw new Error(payload?.detail || 'Failed to load case')
+      setSelectedTransactionHash(null)
       setData(payload)
     } catch (err: any) {
       setCaseError(err.message || 'Failed to load case')
@@ -147,6 +149,7 @@ export default function App(){
   const handleTraceComplete = (result: any) => {
     if (auth?.token) loadCases(auth.token)
     setShowAllSuspiciousPaths(false)
+    setSelectedTransactionHash(null)
     setData(result)
   }
 
@@ -309,11 +312,11 @@ export default function App(){
               ) : null}
               <div className="field-group">
                 <label>Password</label>
-                <input type="password" value={authForm.password} onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })} placeholder="????????" />
+                <input type="password" value={authForm.password} onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })} placeholder="Enter your password" />
               </div>
               {authError ? <div className="error-banner">{authError}</div> : null}
               <button className="primary-btn" onClick={handleAuthSubmit} disabled={authLoading}>
-                {authLoading ? 'Please wait?' : authMode === 'login' ? 'Login' : 'Create account'}
+                {authLoading ? 'Please wait…' : authMode === 'login' ? 'Login' : 'Create account'}
               </button>
             </div>
           )}
@@ -465,15 +468,23 @@ export default function App(){
                   <span className="eyebrow">Flow graph</span>
                   <h3>Wallet relationship graph</h3>
                 </div>
-                <GraphView data={data} />
+                <GraphView data={data} selectedTransactionHash={selectedTransactionHash} onTransactionSelect={(transaction) => setSelectedTransactionHash(transaction.tx_hash || null)} />
               </div>
+
+              {data.evidence?.some((transaction: any) => transaction.timestamp) ? <section className="panel timeline-panel" aria-label="Observed transaction timeline">
+                <div className="panel-header inline-header"><span className="eyebrow">Timeline</span><h3>Recorded transaction sequence</h3></div>
+                <div className="transaction-timeline">
+                  {[...data.evidence].filter((transaction: any) => transaction.timestamp).sort((left: any, right: any) => String(left.timestamp).localeCompare(String(right.timestamp))).slice(0, 12).map((transaction: any, index: number) => <button key={`${transaction.tx_hash || 'transaction'}-${index}`} type="button" className={String(transaction.tx_hash || '').toLowerCase() === String(selectedTransactionHash || '').toLowerCase() ? 'timeline-event active' : 'timeline-event'} onClick={() => setSelectedTransactionHash(transaction.tx_hash || null)}><time>{String(transaction.timestamp).replace('T', ' ').replace('Z', ' UTC')}</time><span><code>{String(transaction.from || 'Unknown').slice(0, 8)}…</code> → <code>{String(transaction.to || 'Unknown').slice(0, 8)}…</code></span><strong>{Number(transaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 6 })} {transaction.asset || summary.asset}</strong></button>)}
+                </div>
+                {data.evidence.length > 12 ? <p className="timeline-note">Showing the first 12 timestamped records. The evidence ledger below retains every recorded transaction.</p> : null}
+              </section> : null}
 
               <div className="panel evidence-panel">
                 <div className="panel-header inline-header">
                   <span className="eyebrow">Evidence</span>
                   <h3>Trace evidence ledger</h3>
                 </div>
-                <EvidenceTable rows={data.evidence || []} />
+                <EvidenceTable rows={data.evidence || []} selectedTransactionHash={selectedTransactionHash} onSelectTransaction={(transaction) => setSelectedTransactionHash(transaction.tx_hash || null)} />
               </div>
             </>
           )}

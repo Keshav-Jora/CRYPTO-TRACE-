@@ -1,46 +1,11 @@
-# CryptoTrace
+# Documentation index
 
-CryptoTrace is a blockchain investigation platform for tracing wallet movement, identifying likely downstream VASP exposure, and producing investigation-ready evidence.
+The root [README](../README.md) is the maintained entry point for setup, configuration, API routes, deployment, and responsible-use guidance.
 
-## Run locally
+This directory contains supporting material:
 
-Backend:
+- [JUDGE_QA_QUICKREF.md](JUDGE_QA_QUICKREF.md): concise reviewer reference grounded in the current implementation.
+- `CryptoTrace_Technical_Documentation.pdf`: supplied technical document.
+- `../file/`: supplied project, problem-statement, and reference material.
 
-```powershell
-cd backend
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-python -m uvicorn main:app --reload --port 8000
-```
-
-Frontend:
-
-```powershell
-cd frontend
-npm install
-npm run dev -- --host 127.0.0.1 --port 5173
-```
-
-Open http://127.0.0.1:5173
-
-## Environment
-
-Set required values in `backend/.env`:
-
-```env
-ETHERSCAN_API_KEY=your_key_here
-USE_ETHERSCAN=true
-DEMO_MODE=false
-```
-
-## Investigation flow
-
-- Enter a case ID and a valid wallet address.
-- Submit to `/trace`.
-- Review the traced path, VASP label, and risk layer output.
-- Download the generated PDF report.
-
-## Scope
-
-This is an investigative evidence prototype built for public blockchain analysis. It does not claim private KYC access or definitive criminal attribution.
+Captured historical demonstration artifacts live in `../demo_verification/`; see [DEMO_VERIFICATION.md](../DEMO_VERIFICATION.md) for scope and limitations.
