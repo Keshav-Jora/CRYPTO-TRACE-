@@ -28,7 +28,7 @@ class Settings:
         dict.fromkeys(
             origin.strip()
             for origin in (
-                "http://localhost:5173,http://127.0.0.1:5173,https://crypto-trace-gold.vercel.app,"
+                "http://localhost:5173,http://127.0.0.1:5173,"
                 + os.getenv("FRONTEND_URL", "") + ","
                 + os.getenv("CORS_ORIGINS", "")
             ).split(",")

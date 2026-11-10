@@ -1,34 +1,14 @@
-# CryptoTrace frontend
+CryptoTrace Frontend
 
-The frontend is a React + Vite investigation workspace. It calls the FastAPI backend for authentication, saved cases, traces, reports, and health checks.
+This is a simple React + Vite frontend for the CryptoTrace demo.
 
-## Run locally
+Quick start (after installing Node.js):
 
-```powershell
-cd frontend
+cd d:\OneDrive\Documents\CRYPTO-TRACE\frontend
 npm install
-npm run dev -- --host 127.0.0.1 --port 5173
-```
+npm run dev
 
-Open <http://127.0.0.1:5173>. When no public API URL is configured, Vite proxies `/auth`, `/cases`, `/trace`, `/reports`, and `/health` to `http://127.0.0.1:8000`.
-
-## Environment
-
-For a separately hosted frontend, configure one of these build-time variables:
-
-```env
-VITE_API_BASE_URL=https://your-backend.example
-# VITE_API_URL is supported as a legacy alias.
-```
-
-Do not place blockchain provider keys, JWT secrets, or any backend-only credentials in `VITE_*` variables: Vite exposes them to the browser bundle.
-
-## Build
-
-```powershell
-npm run build
-```
-
-The investigation graph renders only the graph and evidence returned by the backend. It does not calculate risk, create transaction relationships, or retrieve blockchain data in the browser.
-
-See the [root README](../README.md) for local backend setup and deployment guidance.
+Notes
+- The frontend proxies /trace and /reports to http://127.0.0.1:8000 (see vite.config.ts). Start backend first.
+- CaseForm posts to '/trace' and App shows a Download PDF link to '/reports/{case_id}.pdf'
+- Cytoscape is used for graph visualization; the GraphView currently uses a simple layout and should be refined for production.
